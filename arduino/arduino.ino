@@ -14,9 +14,12 @@
 #define BUZZER_CLOSE_DIST 15
 
 // Define pins numbers for the `LED`
-const int redPin    = 4;
-const int greenPin  = 5;
-const int bluePin   = 6;
+// const int redPin    = 4;
+// const int greenPin  = 5;
+// const int bluePin   = 6;
+#define redPin   PD4
+#define greenPin PD5
+#define bluePin  PD6
 
 // Define pins numbers for the `buzzer`
 const int buzzerPin = 9;
@@ -37,15 +40,15 @@ int angle = MIN_ANGLE;
 int step  = 1;
 
 void setup() {
-  // Initialize `LED` pins as an output
-  pinMode(redPin,   OUTPUT);
-  pinMode(greenPin, OUTPUT);
-  pinMode(bluePin,  OUTPUT);
+  // Initialize `LED` pins as output
+  DDRD |= (1 << redPin);
+  DDRD |= (1 << greenPin);
+  DDRD |= (1 << bluePin);
 
-  // Initialize `buzzer` pin as an output
+  // Initialize `buzzer` pin as output
   pinMode(buzzerPin, OUTPUT);
 
-  // Set the `trigPin` as an OUT and the `echoPin` as an IN 
+  // Set the `trigPin` as OUT and the `echoPin` as IN
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
 
@@ -84,24 +87,42 @@ void loop() {
     if (distance < BUZZER_CLOSE_DIST) {
       // `Close` distance - make the `buzzer` sound loud and make the `LED` red
       tone(buzzerPin, BUZZER_MAX_FREQ);
-      setColor(255, 0, 0);
+      // setColor(255, 0, 0);
+      redColor();
     }
     else if (distance < BUZZER_MID_DIST) {
-      // `Mid` distance - make the `buzzer` sound medium and make the `LED` yellow
+      // `Mid` distance - make the `buzzer` sound medium and make the `LED` blue
       tone(buzzerPin, BUZZER_MID_FREQ);
-      setColor(255, 255, 0);
+      // setColor(255, 255, 0);
+      blueColor();
     } else {
       // `Far` distance - turn off the `buzzer` and make the `LED` green 
-      setColor(0, 255, 0);
       noTone(buzzerPin);
+      // setColor(0, 255, 0);
+      greenColor();
     }
   }
 }
 
-void setColor(int red, int green, int blue) {
-    analogWrite(redPin,   red);
-    analogWrite(greenPin, green);
-    analogWrite(bluePin,  blue);
+void redColor() {
+  PORTD |=  (1 << redPin);
+  PORTD &= ~(1 << greenPin);
+  PORTD &= ~(1 << bluePin);
+  delay(10);
+}
+
+void blueColor() {
+  PORTD |=  (1 << bluePin);
+  PORTD &= ~(1 << redPin);
+  PORTD &= ~(1 << greenPin);
+  delay(10);
+}
+
+void greenColor() {
+  PORTD |=  (1 << greenPin);
+  PORTD &= ~(1 << redPin);
+  PORTD &= ~(1 << bluePin);
+  delay(10);
 }
 
 // Function for calculating the distance measured by the Ultrasonic sensor
