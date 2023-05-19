@@ -10,7 +10,7 @@
 #define BUZZER_MID_FREQ  500
 
 // `Mid` and `Far` distance for the `buzzer`
-#define BUZZER_MID_DIST   35
+#define BUZZER_MID_DIST   40
 #define BUZZER_CLOSE_DIST 15
 
 // Define pins numbers for the `LED`

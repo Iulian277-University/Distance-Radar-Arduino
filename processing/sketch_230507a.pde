@@ -2,31 +2,25 @@ import processing.serial.*;     // Serial communication with Arduino
 import java.awt.event.KeyEvent; // Read data from serial port
 import java.io.IOException;     // Exception handling
 
-// Constants
-final int WIDTH = 1200;
-final int HEIGHT = 700;
-
-final int MAX_DISTANCE = 35; // Maximum distance in `cm`
+// Maximum distance in `cm`
+final int MAX_DISTANCE = 40;
 
 
 // `Serial` object to communicate with Arduino
 Serial myPort;
 
 //  
-String data = "";
-String angle = "";
+String data     = "";
+String angle    = "";
 String distance = "";
 
-String noObject;
 float pixsDistance;
 int iAngle, iDistance;
 int commaIndex = 0;
 
-PFont orcFont;
-
 void setup() {
   // Screen resolution
-  size(WIDTH, HEIGHT);
+  size(1200, 700);
 
   // Enable anti-aliasing
   smooth();
@@ -128,7 +122,7 @@ void drawObject() {
   if (iDistance < MAX_DISTANCE) {
       // Draw the object according to the `angle` and the `distance`
       line(
-          pixsDistance * cos(radians(iAngle))
+          pixsDistance * cos(radians(iAngle)),
         - pixsDistance * sin(radians(iAngle)),
           (width - width * 0.505) * cos(radians(iAngle)),
         - (width - width * 0.505) * sin(radians(iAngle))
@@ -140,59 +134,102 @@ void drawObject() {
 }
 
 void drawLine() {
+  // Save the current coordinate system transformation state onto the stack
   pushMatrix();
+  
+  // Set the line thickness and color (light green) for subsequent drawing commands
   strokeWeight(9);
-  stroke(30,250,60);
-  translate(width / 2,height - height * 0.074); // moves the starting coordinats to new location
-  line(0,0,(height - height * 0.12) * cos(radians(iAngle)), - (height - height * 0.12) * sin(radians(iAngle))); // draws the line according to the angle
+  stroke(30, 250, 60);
+
+  // Move the coordinate system origin to the center of the screen
+  translate(width / 2, height - height * 0.074);
+
+  // Draw the line according to the `angle` and the `distance`
+  line(
+     0,
+     0,
+     (height - height * 0.12) * cos(radians(iAngle)),
+    -(height - height * 0.12) * sin(radians(iAngle)));
+
+  // Restore the coordinate system transformation state back from the stack
   popMatrix();
 }
 
-void drawText() { // draws the texts on the screen
+void drawText() {
+  // Save the current coordinate system transformation state onto the stack
   pushMatrix();
-  if (iDistance > 40) {
-      noObject = "Out of Range";
-  }
-  else {
-      noObject = "In Range";
-  }
-  fill(0,0,0);
+
+  // Draw the background and a rectangle for the text
+  fill(0, 0, 0);
   noStroke();
   rect(0, height - height * 0.0648, width, height);
-  fill(98,245,31);
+  
+  // Set the text color (green) and size  
+  fill(98, 245, 31);
   textSize(25);
   
-  text("10cm",width - width * 0.3854,height - height * 0.0833);
-  text("20cm",width - width * 0.281,height - height * 0.0833);
-  text("30cm",width - width * 0.177,height - height * 0.0833);
-  text("40cm",width - width * 0.0729,height - height * 0.0833);
+  // Write the 4 landmarks on the screen
+  text("10cm", width - width * 0.3854, height - height * 0.0833);
+  text("20cm", width - width * 0.2810, height - height * 0.0833);
+  text("30cm", width - width * 0.1770, height - height * 0.0833);
+  text("40cm", width - width * 0.0729, height - height * 0.0833);
+ 
+  // Set the font size to `40` and write the `angle` and the `distance` values
   textSize(40);
-  // text("Indian Lifehacker ", width - width * 0.875, height - height * 0.0277);
-  text("Angle: " + iAngle + " °", width - width * 0.48, height - height * 0.0277);
-  text("Distance: ", width - width * 0.26, height - height * 0.0277);
-  if (iDistance < 40) {
-      text("" + iDistance + " cm", width - width * 0.225, height - height * 0.0277);
-  }
+  text("Radar Distance ",         width - width * 0.875, height - height * 0.0277);
+  text("Angle: " + iAngle + " °", width - width * 0.480, height - height * 0.0277);
+  text("Distance: ",              width - width * 0.260, height - height * 0.0277);
+
+  if (iDistance < MAX_DISTANCE)
+      text("" + iDistance + " cm", width - width * 0.125, height - height * 0.0277);
+
+  // Set the font size to `25`
   textSize(25);
-  fill(98,245,60);
-  translate((width - width * 0.4994) + width / 2 * cos(radians(30)),(height - height * 0.0907) - width / 2 * sin(radians(30)));
-  rotate( - radians( - 60));
-  text("30°",0,0);
+  fill(98, 245, 60);
+
+  // Draw the `30` degrees angle text
+  translate(
+    (width  - width  * 0.4994) + width / 2 * cos(radians(30)),
+    (height - height * 0.0907) - width / 2 * sin(radians(30))
+  );
+  rotate(-radians(-60));
+  text("30°", 0, 0);
   resetMatrix();
-  translate((width - width * 0.503) + width / 2 * cos(radians(60)),(height - height * 0.0888) - width / 2 * sin(radians(60)));
-  rotate( - radians( - 30));
-  text("60°",0,0);
+
+  // Draw the `60` degrees angle text
+  translate(
+    (width  - width  * 0.5030) + width / 2 * cos(radians(60)),
+    (height - height * 0.0888) - width / 2 * sin(radians(60))
+  );
+  rotate(-radians(-30));
+  text("60°", 0, 0);
   resetMatrix();
-  translate((width - width * 0.507) + width / 2 * cos(radians(90)),(height - height * 0.0833) - width / 2 * sin(radians(90)));
+
+  // Draw the `90` degrees angle text
+  translate(
+    (width  - width  * 0.5070) + width / 2 * cos(radians(90)),
+    (height - height * 0.0833) - width / 2 * sin(radians(90))
+  );
   rotate(radians(0));
-  text("90°",0,0);
+  text("90°", 0, 0);
   resetMatrix();
-  translate(width - width * 0.513 + width / 2 * cos(radians(120)),(height - height * 0.07129) - width / 2 * sin(radians(120)));
-  rotate(radians( - 30));
-  text("120°",0,0);
+
+  // Draw the `120` degrees angle text
+  translate(
+    (width  - width  * 0.51300) + width / 2 * cos(radians(120)),
+    (height - height * 0.07129) - width / 2 * sin(radians(120))
+  );
+  rotate(radians(-30));
+  text("120°", 0, 0);
   resetMatrix();
-  translate((width - width * 0.5104) + width / 2 * cos(radians(150)),(height - height * 0.0574) - width / 2 * sin(radians(150)));
-  rotate(radians( - 60));
-  text("150°",0,0);
+
+  // Draw the `150` degrees angle text
+  translate(
+    (width  - width  * 0.5104) + width / 2 * cos(radians(150)),
+    (height - height * 0.0574) - width / 2 * sin(radians(150)));
+  rotate(radians(-60));
+  text("150°", 0, 0);
+
+  // Restore the coordinate system transformation state back from the stack
   popMatrix(); 
 }
