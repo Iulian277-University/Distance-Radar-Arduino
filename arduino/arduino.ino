@@ -10,7 +10,7 @@
 #define BUZZER_MID_FREQ  500
 
 // `Mid` and `Far` distance for the `buzzer`
-#define BUZZER_MID_DIST   30
+#define BUZZER_MID_DIST   35
 #define BUZZER_CLOSE_DIST 15
 
 // Define pins numbers for the `LED`
@@ -57,7 +57,7 @@ void setup() {
 }
 
 void loop() {
-  // Rotate the servo motor from `MIN_ANGLE` to `MAX_ANGLE` degrees
+  // Rotate the servo motor from `MIN_ANGLE` to `MAX_ANGLE` degrees and back
   while (1) {
     // Calculate the `angle` for the next step
     if (angle <= MIN_ANGLE && step == -1)
@@ -81,19 +81,21 @@ void loop() {
     Serial.print(distance);  
     Serial.print('.');
 
-    if (distance < BUZZER_CLOSE_DIST) { // Close
+    if (distance < BUZZER_CLOSE_DIST) {
+      // `Close` distance - make the `buzzer` sound loud and make the `LED` red
       tone(buzzerPin, BUZZER_MAX_FREQ);
       setColor(255, 0, 0);
     }
-    else if (distance < BUZZER_MID_DIST) { // Medium
+    else if (distance < BUZZER_MID_DIST) {
+      // `Mid` distance - make the `buzzer` sound medium and make the `LED` yellow
       tone(buzzerPin, BUZZER_MID_FREQ);
       setColor(255, 255, 0);
-    } else { // Far
+    } else {
+      // `Far` distance - turn off the `buzzer` and make the `LED` green 
       setColor(0, 255, 0);
       noTone(buzzerPin);
     }
   }
-  
 }
 
 void setColor(int red, int green, int blue) {
@@ -104,13 +106,20 @@ void setColor(int red, int green, int blue) {
 
 // Function for calculating the distance measured by the Ultrasonic sensor
 int calculateDistance() {
+  // Set the `trigPin` to `LOW` state for 2 microseconds
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
-  // Sets the trigPin on HIGH state for 10 micro seconds
+
+  // Set the `trigPin` to `HIGH` state for 10 micro seconds
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
+
+  // Set the `trigPin` back to `LOW` state
   digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH);  // Reads the echoPin, returns the sound wave travel time in microseconds
+
+  // Read the `echoPin`, return the sound wave travel time in microseconds
+  duration = pulseIn(echoPin, HIGH);
   distance = duration * 0.034 / 2;
+
   return distance;
 }
