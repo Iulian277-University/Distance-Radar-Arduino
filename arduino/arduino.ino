@@ -10,16 +10,18 @@
 #define BUZZER_MID_FREQ  500
 
 // `Mid` and `Far` distance for the `buzzer`
-#define BUZZER_MID_DIST   40
+#define BUZZER_MID_DIST   35
 #define BUZZER_CLOSE_DIST 15
 
 // Define pins numbers for the `LED`
-// const int redPin    = 4;
-// const int greenPin  = 5;
-// const int bluePin   = 6;
 #define redPin   PD4
 #define greenPin PD5
 #define bluePin  PD6
+
+// Define pin number for the `timerLed`
+const int timerLed = 13;
+int count = 0;
+bool ledState = false;
 
 // Define pins numbers for the `buzzer`
 const int buzzerPin = 9;
@@ -33,17 +35,57 @@ long duration;
 int distance;
 
 // Create a `Servo` object for controlling the `servo` motor
-Servo myServo;
+Servo servo;
 
 // Initial `angle`
 int angle = MIN_ANGLE;
 int step  = 1;
+
+ISR(TIMER1_COMPB_vect) {
+  count++;
+  if (count == 50) {
+    count = 0;
+    ledState = !ledState;
+    digitalWrite(timerLed, ledState);
+  }
+}
+
+void configure_timer() {
+  // Set the `TCCR1B` register to `0`
+  TCCR1B = 0;
+
+  // Initialize counter value to `0`
+  TCNT1 = 0;
+
+  // Compare match register 16MHz/256/2Hz-1
+  OCR1B = 31250;
+
+  // CTC mode - compare to `OCR1B`
+  TCCR1B |= (1 << WGM12);
+  
+  // Set prescaler to 256
+  TCCR1B |= (1 << CS10);
+}
+
+void init_timer() {
+  // Enable timer compare interrupt
+  TIMSK1 |= (1 << OCIE1B);
+}
 
 void setup() {
   // Initialize `LED` pins as output
   DDRD |= (1 << redPin);
   DDRD |= (1 << greenPin);
   DDRD |= (1 << bluePin);
+
+  // Initialize `timerLed` pin as output
+  pinMode(timerLed, OUTPUT);
+
+  // Configure `Timer` for `1` second interval
+  cli();
+  configure_timer();
+  init_timer();
+  sei();
 
   // Initialize `buzzer` pin as output
   pinMode(buzzerPin, OUTPUT);
@@ -53,7 +95,7 @@ void setup() {
   pinMode(echoPin, INPUT);
 
   // Define on which pin is the servo motor attached
-  myServo.attach(12);
+  servo.attach(12);
 
   // Set the baud rate to `9600` for the `Serial` communication
   Serial.begin(9600);
@@ -61,43 +103,41 @@ void setup() {
 
 void loop() {
   // Rotate the servo motor from `MIN_ANGLE` to `MAX_ANGLE` degrees and back
-  while (1) {
-    // Calculate the `angle` for the next step
-    if (angle <= MIN_ANGLE && step == -1)
-      step = 1;
-    else if (angle >= MAX_ANGLE && step == 1)
-      step = -1;
-    angle += step;
+  // Calculate the `angle` for the next step
+  if (angle <= MIN_ANGLE && step == -1)
+    step = 1;
+  else if (angle >= MAX_ANGLE && step == 1)
+    step = -1;
+  angle += step;
 
-    // Rotate `servo` to the current `angle`
-    myServo.write(angle);
-    // Wait for `30` milliseconds
-    delay(30);
-    // Calculate the `distance` measured by the Ultrasonic sensor for each degree
-    distance = calculateDistance();
+  // Rotate `servo` to the current `angle`
+  servo.write(angle);
+  // Wait for `30` milliseconds
+  delay(30);
+  // Calculate the `distance` measured by the Ultrasonic sensor for each degree
+  distance = calculateDistance();
 
-    // Send the current `angle` and the `distance`
-    // measured by the Ultrasonic sensor into the Serial Port
-    // Also, send `,` and `.` characters for indexing purposes (in the Processing IDE)
-    Serial.print(angle);
-    Serial.print(',');
-    Serial.print(distance);  
-    Serial.print('.');
+  // Send the current `angle` and the `distance`
+  // measured by the Ultrasonic sensor into the Serial Port
+  // Also, send `,` and `.` characters for indexing purposes (in the Processing IDE)
+  Serial.print(angle);
+  Serial.print(',');
+  Serial.print(distance);  
+  Serial.print('.');
 
-    if (distance < BUZZER_CLOSE_DIST) {
-      // `Close` distance - make the `buzzer` sound loud and make the `LED` red
-      tone(buzzerPin, BUZZER_MAX_FREQ);
-      redColor();
-    }
-    else if (distance < BUZZER_MID_DIST) {
-      // `Mid` distance - make the `buzzer` sound medium and make the `LED` blue
-      tone(buzzerPin, BUZZER_MID_FREQ);
-      blueColor();
-    } else {
-      // `Far` distance - turn off the `buzzer` and make the `LED` green 
-      noTone(buzzerPin);
-      greenColor();
-    }
+  if (distance < BUZZER_CLOSE_DIST) {
+    // `Close` distance - make the `buzzer` sound loud and make the `LED` red
+    tone(buzzerPin, BUZZER_MAX_FREQ);
+    redColor();
+  }
+  else if (distance < BUZZER_MID_DIST) {
+    // `Mid` distance - make the `buzzer` sound medium and make the `LED` blue
+    tone(buzzerPin, BUZZER_MID_FREQ);
+    blueColor();
+  } else {
+    // `Far` distance - turn off the `buzzer` and make the `LED` green 
+    noTone(buzzerPin);
+    greenColor();
   }
 }
 
